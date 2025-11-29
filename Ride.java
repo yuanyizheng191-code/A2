@@ -118,3 +118,110 @@ public class Ride implements RideInterface {
             "✗ " + visitor.getName() + " is not in ride history");
         return found;
     }
+
+    @Override
+    public int numberOfVisitors() {
+        int count = rideHistory.size();
+        System.out.println("Number of visitors in ride history: " + count);
+        return count;
+    }
+
+    @Override
+    public void printRideHistory() {
+        if (rideHistory.isEmpty()) {
+            System.out.println(rideName + " ride history is empty");
+            return;
+        }
+        
+        System.out.println("=== " + rideName + " Ride History ===");
+        Iterator<Visitor> iterator = rideHistory.iterator();
+        int position = 1;
+        while (iterator.hasNext()) {
+            System.out.println(position + ". " + iterator.next());
+            position++;
+        }
+    }
+
+    // Part 4B: Sorting method
+    public void sortRideHistory(Comparator<Visitor> comparator) {
+        Collections.sort(rideHistory, comparator);
+        System.out.println("✓ Ride history has been sorted");
+    }
+
+    // Part 5: Run ride cycle
+    @Override
+    public void runOneCycle() {
+        // Check if there's an operator
+        if (operator == null) {
+            System.out.println("✗ Cannot run " + rideName + " - No operator assigned");
+            return;
+        }
+        
+        // Check if waiting queue is empty
+        if (waitingLine.isEmpty()) {
+            System.out.println("✗ Cannot run " + rideName + " - Waiting queue is empty");
+            return;
+        }
+        
+        System.out.println("=== Running " + rideName + " One Cycle ===");
+        System.out.println("Operator: " + operator.getName());
+        
+        int ridersThisCycle = 0;
+        // Remove up to maxRider visitors from queue
+        while (ridersThisCycle < maxRider && !waitingLine.isEmpty()) {
+            Visitor rider = waitingLine.poll();
+            addVisitorToHistory(rider);
+            ridersThisCycle++;
+            System.out.println("✓ " + rider.getName() + " is riding " + rideName);
+        }
+        
+        numOfCycles++;
+        System.out.println("Number of riders this cycle: " + ridersThisCycle);
+        System.out.println("Total number of cycles run: " + numOfCycles);
+    }
+
+    // Part 6: Export ride history to file
+    public void exportRideHistory(String filename) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            for (Visitor visitor : rideHistory) {
+                // Format: name,age,id,ticketNumber,membershipLevel
+                writer.println(visitor.getName() + "," + 
+                              visitor.getAge() + "," + 
+                              visitor.getId() + "," + 
+                              visitor.getTicketNumber() + "," + 
+                              visitor.getMembershipLevel());
+            }
+            System.out.println("✓ Ride history has been exported to file: " + filename);
+        } catch (IOException e) {
+            System.out.println("✗ Error exporting file: " + e.getMessage());
+        }
+    }
+
+    // Part 7: Import ride history from file
+    public void importRideHistory(String filename) {
+        int importedCount = 0;
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 5) {
+                    String name = parts[0];
+                    int age = Integer.parseInt(parts[1]);
+                    String id = parts[2];
+                    String ticketNumber = parts[3];
+                    String membershipLevel = parts[4];
+                    
+                    Visitor visitor = new Visitor(name, age, id, ticketNumber, membershipLevel);
+                    rideHistory.add(visitor);
+                    importedCount++;
+                }
+            }
+            System.out.println("✓ Imported " + importedCount + " visitors to ride history from file");
+        } catch (IOException e) {
+            System.out.println("✗ Error importing file: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("✗ File format error: " + e.getMessage());
+        }
+    }
+}
